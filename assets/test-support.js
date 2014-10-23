@@ -1,3 +1,9 @@
+/* jshint ignore:start */
+
+runningTests = true;
+
+/* jshint ignore:end */
+
 define("ember-qunit/isolated-container",
   ["./test-resolver","ember","exports"],
   function(__dependency1__, __dependency2__, __exports__) {

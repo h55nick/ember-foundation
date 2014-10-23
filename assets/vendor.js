@@ -1,4 +1,11 @@
-var define, requireModule, require, requirejs;
+/* jshint ignore:start */
+
+window.EmberENV = {"FEATURES":{}};
+var runningTests = false;
+
+/* jshint ignore:end */
+
+;var define, requireModule, require, requirejs;
 
 (function() {
 
@@ -60329,7 +60336,7 @@ define("ember/resolver",
     };
   }
 
-  if (!Object.create && !Object.create(null).hasOwnProperty) {
+  if (!(Object.create && !Object.create(null).hasOwnProperty)) {
     throw new Error("This browser does not support Object.create(null), please polyfil with es5-sham: http://git.io/yBU2rg");
   }
 
@@ -60349,15 +60356,28 @@ define("ember/resolver",
 
     if (fullName.parsedName === true) { return fullName; }
 
-    var nameParts = fullName.split(":"),
-        type = nameParts[0], fullNameWithoutType = nameParts[1],
-        name = fullNameWithoutType,
-        namespace = get(this, 'namespace'),
-        root = namespace;
+    var prefixParts = fullName.split('@');
+    var prefix;
+
+    if (prefixParts.length === 2) {
+      if (prefixParts[0].split(':')[0] === 'view') {
+        prefixParts[0] = prefixParts[0].split(':')[1];
+        prefixParts[1] = 'view:' + prefixParts[1];
+      }
+
+      prefix = prefixParts[0];
+    }
+
+    var nameParts = prefixParts[prefixParts.length - 1].split(":");
+    var type = nameParts[0], fullNameWithoutType = nameParts[1];
+    var name = fullNameWithoutType;
+    var namespace = get(this, 'namespace');
+    var root = namespace;
 
     return {
       parsedName: true,
       fullName: fullName,
+      prefix: prefix || this.prefix({type: type}),
       type: type,
       fullNameWithoutType: fullNameWithoutType,
       name: name,
@@ -60425,6 +60445,7 @@ define("ember/resolver",
   var Resolver = Ember.DefaultResolver.extend({
     resolveOther: resolveOther,
     resolveTemplate: resolveOther,
+    pluralizedTypes: null,
 
     makeToString: function(factory, fullName) {
       return '' + this.namespace.modulePrefix + '@' + fullName + ':';
@@ -60436,6 +60457,12 @@ define("ember/resolver",
     init: function() {
       this._super();
       this._normalizeCache = makeDictionary();
+
+      this.pluralizedTypes = this.pluralizedTypes || makeDictionary();
+
+      if (!this.pluralizedTypes.config) {
+        this.pluralizedTypes.config = 'config';
+      }
     },
     normalize: function(fullName) {
       return this._normalizeCache[fullName] || (this._normalizeCache[fullName] = this._normalize(fullName));
@@ -60451,6 +60478,10 @@ define("ember/resolver",
       } else {
         return fullName;
       }
+    },
+
+    pluralize: function(type) {
+      return this.pluralizedTypes[type] || (this.pluralizedTypes[type] = type + 's');
     },
 
     podBasedLookupWithPrefix: function(podPrefix, parsedName) {
@@ -60480,7 +60511,7 @@ define("ember/resolver",
 
     mainModuleName: function(parsedName) {
       // if router:main or adapter:main look for a module with just the type first
-      var tmpModuleName = this.prefix(parsedName) + '/' + parsedName.type;
+      var tmpModuleName = parsedName.prefix + '/' + parsedName.type;
 
       if (parsedName.fullNameWithoutType === 'main') {
         return tmpModuleName;
@@ -60488,7 +60519,7 @@ define("ember/resolver",
     },
 
     defaultModuleName: function(parsedName) {
-      return this.prefix(parsedName) + '/' +  parsedName.type + 's/' + parsedName.fullNameWithoutType;
+      return parsedName.prefix + '/' +  this.pluralize(parsedName.type) + '/' + parsedName.fullNameWithoutType;
     },
 
     prefix: function(parsedName) {
@@ -79016,3 +79047,5 @@ window.Modernizr=function(a,b,c){function d(a){t.cssText=a}function e(a,b){retur
 ;eval("define(\"ember-foundation/components/f-tab-panel\", \n  [\"ember-foundation/components/f-component\",\"exports\"],\n  function(__dependency1__, __exports__) {\n    \"use strict\";\n    var FComponent = __dependency1__[\"default\"];\n\n    __exports__[\"default\"] = FComponent.extend({\n      setup: function() {\n        var tabs = [];\n\n        this.$(\'.content\').each(function() {\n          tabs.push({\n            href: \'#\' + this.getAttribute(\'id\'),\n            title: this.getAttribute(\'data-tab-title\')\n          });\n        });\n\n        this.set(\'tabs\', tabs);\n      }.on(\'didInsertElement\'),\n\n      tagName: \'div\'\n    });\n  });//# sourceURL=ember-foundation/components/f-tab-panel.js");
 
 ;eval("define(\"ember-foundation/components/f-tooltip\", \n  [\"ember\",\"ember-foundation/components/f-component\",\"exports\"],\n  function(__dependency1__, __dependency2__, __exports__) {\n    \"use strict\";\n    var Ember = __dependency1__[\"default\"];\n    var FComponent = __dependency2__[\"default\"];\n\n    __exports__[\"default\"] = FComponent.extend({\n      \'aria-haspopup\': \'true\',\n\n      attributeBindings: [\'aria-haspopup\', \'data-tooltip\', \'data-width\', \'title\'],\n\n      classNameBindings: [\'positionClass\'],\n\n      classNames: [\'has-tip\'],\n\n      \'data-tooltip\': \'\',\n\n      \'data-width\': Ember.computed.alias(\'width\'),\n\n      position: \'bottom\',\n\n      positionClass: function() {\n        return \'tip-\' + this.get(\'position\');\n      }.property(\'position\'),\n\n      tagName: \'span\'\n    });\n  });//# sourceURL=ember-foundation/components/f-tooltip.js");
+
+;eval("define(\"ember-foundation\", [\"ember-foundation/index\",\"exports\"], function(__index__, __exports__) {\n  \"use strict\";\n  Object.keys(__index__).forEach(function(key){\n    __exports__[key] = __index__[key];\n  });\n});\n//# sourceURL=__reexport.js");
